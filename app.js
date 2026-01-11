@@ -1,0 +1,25 @@
+require('dotenv').config();
+const express = require('express');
+const connectDB = require('./config/db');
+const logger = require('./middleware/logger');
+const userRoutes = require('./routes/userRoutes');
+
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(logger);
+
+// Routes
+app.use('/users/api', userRoutes);
+
+// Health check
+app.get('/', (req, res) => {
+    res.send('Cost REST API is running');
+});
+
+// DB connection
+connectDB();
+
+module.exports = app;
