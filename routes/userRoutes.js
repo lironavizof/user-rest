@@ -166,7 +166,97 @@ router.get('/exists/:id', async (req, res) => {
     }
 });
 
+// GET /api/report?userid=111&year=2026&month=1
+    router.get('/report', async (req, res) => {
+        try {
+            const { userid, year, month } = req.query;
 
+            if (!userid || !year || !month) {
+                return res.status(400).json({
+                    error: 'Missing required query parameters: userid, year, month'
+                });
+            }
+
+            const exists = await userExistsById(idNum);
+            if (!exists) {
+                return res.status(400).json({ error: 'User does not exist' });
+            }
+
+            const userIdNum = Number(userid);
+            const yearNum = Number(year);
+            const monthNum = Number(month);
+
+
+            if (isNaN(userIdNum) || isNaN(yearNum) || isNaN(monthNum)) {
+                return res.status(400).json({
+                    error: 'userid, year and month must be numbers'
+                });
+            }
+
+            if (monthNum < 1 || monthNum > 12) {
+                return res.status(400).json({
+                    error: 'month must be between 1 and 12'
+                });
+            }
+
+            const endOfRequestedMonth = new Date(yearNum, monthNum, 0);
+
+            const now = new Date();
+
+            if (now <= endOfRequestedMonth) {
+                // get new report
+                //return
+            }
+            else{
+                //
+            }
+
+
+            const startDate = new Date(yearNum, monthNum - 1, 1);
+            const endDate = new Date(yearNum, monthNum, 1);
+
+            // Aggregate costs grouped by category
+            const aggregationResult = await Cost.aggregate([
+                {
+                    $match: {
+                        userid: userIdNum,
+                        date: { $gte: startDate, $lt: endDate }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$category',
+                        costs: {
+                            $push: {
+                                sum: '$sum',
+                                description: '$description',
+                                day: { $dayOfMonth: '$date' }
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            // Build the costs array as requested
+            // Each element is { categoryName: [costs...] }
+            const costsArray = aggregationResult.map(item => {
+                return { [item._id]: item.costs };
+            });
+
+            // Final response
+            const response = {
+                userid: userIdNum,
+                year: yearNum,
+                month: monthNum,
+                costs: costsArray
+            };
+
+            res.json(response);
+
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
 
 const userExistsById = async (userId) => {
     const exists = await User.exists({ id: userId });
