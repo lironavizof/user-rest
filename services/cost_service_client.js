@@ -1,4 +1,4 @@
-// services/costServiceClient.js
+// services/cost_service_client.js
 // Calls the Cost service to get total costs of a user
 
 const DEFAULT_TIMEOUT_MS = 5000;

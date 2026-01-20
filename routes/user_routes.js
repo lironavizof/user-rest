@@ -1,67 +1,13 @@
 const express = require('express');
 const User = require('../models/User');
-//const Cost = require('../models/Cost');
 
 const router = express.Router();
 
 
-// router.get('/:id', async (req, res) => {
-//     try {
-//         const idNum = Number(req.params.id);
-//         if (Number.isNaN(idNum)) {
-//             return res.status(400).json({ error: 'User id must be a number' });
-//         }
-//
-//         const user = await User.findOne({ id: idNum }).lean();
-//         if (!user) {
-//             return res.status(404).json({ error: `User with id ${idNum} not found` });
-//         }
-//
-//         const totalAgg = await Cost.aggregate([
-//             { $match: { userid: idNum } },
-//             { $group: { _id: null, total: { $sum: '$sum' } } }
-//         ]);
-//
-//         const total = totalAgg.length > 0 ? totalAgg[0].total : 0;
-//
-//         return res.json({
-//             first_name: user.first_name,
-//             last_name: user.last_name,
-//             id: user.id,
-//             total
-//         });
-//     } catch (err) {
-//         return res.status(500).json({ error: err.message });
-//     }
-// });
 
-const { getUserTotalCosts } = require('../services/costServiceClient');
 
-router.get('/:id', async (req, res) => {
-    try {
-        const idNum = Number(req.params.id);
-        if (Number.isNaN(idNum)) {
-            return res.status(400).json({ error: 'User id must be a number' });
-        }
+const { getUserTotalCosts } = require('../services/cost_service_client');
 
-        const user = await User.findOne({ id: idNum }).lean();
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // 👇 HTTP call to Cost service
-        const total = await getUserTotalCosts(idNum);
-
-        res.json({
-            first_name: user.first_name,
-            last_name: user.last_name,
-            id: user.id,
-            total
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 
 //GET /api/users
@@ -89,20 +35,23 @@ router.post('/add', async (req, res) => {
 
 
         if (id === undefined || !first_name || !last_name || !birthday) {
+            res.locals.error = { id: 400, message: 'Missing required fields: id, first_name, last_name, birthday' };
             return res.status(400).json({
-                error: 'Missing required fields: id, first_name, last_name, birthday'
+                error: res.locals.error.message
             });
         }
 
         const idNum = Number(id);
         if (Number.isNaN(idNum)) {
-            return res.status(400).json({ error: 'id must be a number' });
+            res.locals.error = { id: 400, message: 'id must be a number' };
+            return res.status(400).json({ error: res.locals.error.message });
         }
 
 
         const bday = new Date(birthday);
         if (Number.isNaN(bday.getTime())) {
-            return res.status(400).json({ error: 'birthday must be a valid date' });
+            res.locals.error = { id: 400, message: 'birthday must be a valid date' };
+            return res.status(400).json({ error: res.locals.error.message });
         }
 
 
@@ -116,8 +65,10 @@ router.post('/add', async (req, res) => {
         const exists = await userExistsById(idNum);
 
         if (exists) {
+            res.locals.error = { id: 409, message: 'User already exists' };
             return res.status(409).json({
-                error: 'User already exists'
+
+                error: res.locals.error.message
             });
         }
 
@@ -133,10 +84,11 @@ router.post('/add', async (req, res) => {
     } catch (err) {
 
         if (err.code === 11000) {
-            return res.status(409).json({ error: 'User with this id already exists' });
+            res.locals.error = { id: 409, message: 'User with this id already exists' };
+            return res.status(409).json({ error: res.locals.error.message });
         }
-
-        return res.status(400).json({ error: err.message });
+        res.locals.error = { id: 400, message: err.message };
+        return res.status(400).json({ error: res.locals.error.message });
     }
 });
 
@@ -160,12 +112,44 @@ router.get('/exists/:id', async (req, res) => {
         });
 
     } catch (err) {
+        res.locals.error = { id: 500, message: err.message };
         res.status(500).json({
-            error: err.message
+            error: res.locals.error.message
         });
     }
 });
 
+
+
+
+router.get('/:id', async (req, res) => {
+    try {
+        const idNum = Number(req.params.id);
+        if (Number.isNaN(idNum)) {
+            res.locals.error = { id: 400, message: 'User id must be a number' };
+            return res.status(400).json({ error: res.locals.error.message });
+        }
+
+        const user = await User.findOne({ id: idNum }).lean();
+        if (!user) {
+            res.locals.error = { id: 404, message: 'User not found' };
+            return res.status(404).json({ error: res.locals.error.message });
+        }
+
+        //  HTTP call to Cost service
+        const total = await getUserTotalCosts(idNum);
+
+        res.json({
+            first_name: user.first_name,
+            last_name: user.last_name,
+            id: user.id,
+            total
+        });
+    } catch (err) {
+        res.locals.error = { id: 500, message:  err.message };
+        res.status(500).json({ error: res.locals.error.message });
+    }
+});
 
 
 const userExistsById = async (userId) => {
