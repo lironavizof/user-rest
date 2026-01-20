@@ -1,12 +1,12 @@
-// services/cost_service_client.js
-// Calls the Cost service to get total costs of a user
-// this file is a "client" for the Cost service (another process)
-// goal: ask the cost service what is the total costs for a specific user
-const DEFAULT_TIMEOUT_MS = 10000git ;
-// helper function: does fetch() but stops if it takes too long
-// input: url, fetch options, timeout in ms
-// output: the fetch Response object
-// if timeout happens -> AbortController cancels the request
+/* services/cost_service_client.js
+ * Calls the Cost service to get total costs of a user
+ * this file is a "client" for the Cost service (another process)
+ * goal: ask the cost service what is the total costs for a specific user */
+const DEFAULT_TIMEOUT_MS = 10000;
+/* helper function: does fetch() but stops if it takes too long
+ * input: url, fetch options, timeout in ms
+ * output: the fetch Response object
+ * if timeout happens - AbortController cancels the request */
 const fetchWithTimeout = async (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -18,10 +18,10 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = DEFAULT_TIMEOUT_M
         clearTimeout(timeoutId);
     }
 };
-// main function: get total costs for userId from the cost service
-// input: userId (number)
-// output: total (number)
-// throws error if COST_SERVICE_URL missing or service returns bad response
+/* main function: get total costs for userId from the cost service
+ * input: userId (number)
+ * output: total (number)
+ * throws error if COST_SERVICE_URL missing or service returns bad response */
 
 const getUserTotalCosts = async (userId) => {
     const baseUrl = process.env.COST_SERVICE_URL;

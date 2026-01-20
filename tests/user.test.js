@@ -2,29 +2,37 @@ process.env.NODE_ENV = 'test';
 
 const request = require('supertest');
 
-/**
- * Prevent real DB connection when importing app
+
+/*
+ * We don't want to connect to the real MongoDB in unit tests.
+ * So we mock connectDB BEFORE loading the app.
  */
 jest.mock('../config/db', () => jest.fn(() => Promise.resolve()));
 
-/**
- * Mock cost service client (used by GET /users/api/:id)
+/*
+ * This service calls the Cost microservice in GET /users/api/:id (to get total).
+ * In tests we mock it so there is no real HTTP request.
  */
 jest.mock('../services/cost_service_client', () => ({
     getUserTotalCosts: jest.fn()
 }));
 
-/**
- * Mock User model (constructor + static methods)
+/*
+ * Mock the User mongoose model:
+ * - constructor (new User(...)) should return an object with .save()
+ * - static methods: find / findOne / exists
+ * This way we test only the routes logic, not MongoDB.
  */
 jest.mock('../models/User', () => {
     const saveMock = jest.fn();
 
+    // fake "User" constructor
     const User = jest.fn((data) => ({
         ...data,
         save: saveMock
     }));
 
+    // fake mongoose static methods
     User.find = jest.fn();
     User.findOne = jest.fn();
     User.exists = jest.fn();
@@ -55,6 +63,7 @@ describe('User service routes', () => {
     // GET /users/api/users
     // ----------------
     test('GET /users/api/users returns users list', async () => {
+        // Mock DB response for User.find()
         const mockUsers = [
             { id: 1, first_name: 'A', last_name: 'B', birthday: '2000-01-01' },
             { id: 2, first_name: 'C', last_name: 'D', birthday: '2001-01-01' }
@@ -68,6 +77,7 @@ describe('User service routes', () => {
     });
 
     test('GET /users/api/users when DB fails -> 500', async () => {
+        // Simulate a DB error
         User.find.mockRejectedValue(new Error('DB fail'));
 
         const res = await request(app).get('/users/api/users');
@@ -79,12 +89,14 @@ describe('User service routes', () => {
     // POST /users/api/add
     // ----------------
     test('POST /users/api/add missing fields -> 400', async () => {
+        // Only id is provided -> should fail validation
         const res = await request(app).post('/users/api/add').send({ id: 10 });
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('Missing required fields');
     });
 
     test('POST /users/api/add id not number -> 400', async () => {
+        // id should be numeric
         const res = await request(app).post('/users/api/add').send({
             id: 'abc',
             first_name: 'Test',
@@ -96,6 +108,7 @@ describe('User service routes', () => {
     });
 
     test('POST /users/api/add invalid birthday -> 400', async () => {
+        // birthday must be a valid date
         const res = await request(app).post('/users/api/add').send({
             id: 10,
             first_name: 'Test',
@@ -107,6 +120,7 @@ describe('User service routes', () => {
     });
 
     test('POST /users/api/add user already exists -> 409', async () => {
+        // User.exists() returns something -> means user already exists
         User.exists.mockResolvedValue({ _id: 'x' });
 
         const res = await request(app).post('/users/api/add').send({
@@ -177,12 +191,14 @@ describe('User service routes', () => {
     // GET /users/api/exists/:id
     // ----------------
     test('GET /users/api/exists/:id invalid id -> 400', async () => {
+        // id must be a number
         const res = await request(app).get('/users/api/exists/abc');
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('error');
     });
 
     test('GET /users/api/exists/:id exists true', async () => {
+        // exists() returns something -> true
         User.exists.mockResolvedValue({ _id: 'x' });
 
         const res = await request(app).get('/users/api/exists/10');
