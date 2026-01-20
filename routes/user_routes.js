@@ -99,7 +99,7 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// GET /api/users/exists/:id
+// GET /users/api/exists/:id
 // Checks if user exists in DB by id.
 // Input (req.params): id
 // Output:

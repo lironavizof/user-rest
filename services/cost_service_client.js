@@ -2,7 +2,7 @@
 // Calls the Cost service to get total costs of a user
 // this file is a "client" for the Cost service (another process)
 // goal: ask the cost service what is the total costs for a specific user
-const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 10000git ;
 // helper function: does fetch() but stops if it takes too long
 // input: url, fetch options, timeout in ms
 // output: the fetch Response object
