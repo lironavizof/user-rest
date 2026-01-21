@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(logger);
 
 // Routes
-app.use('/users/api', userRoutes);
+app.use('/api', userRoutes);
 
 // Health check
 app.get('/', (req, res) => {
