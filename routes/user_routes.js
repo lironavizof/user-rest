@@ -140,7 +140,7 @@ router.get('/exists/:id', async (req, res) => {
  *  - 400 + { error } if id not number
  *  - 404 + { error } if user not found
  *  - 500 + { error } if DB / cost-service fail */
-router.get('users/:id', async (req, res) => {
+router.get('/users/:id', async (req, res) => {
     try {
         const idNum = Number(req.params.id);
         if (Number.isNaN(idNum)) {
