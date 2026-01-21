@@ -60,9 +60,9 @@ describe('User service routes', () => {
     });
 
     // ----------------
-    // GET /users/api/users
+    // GET /api/users
     // ----------------
-    test('GET /users/api/users returns users list', async () => {
+    test('GET /api/users returns users list', async () => {
         // Mock DB response for User.find()
         const mockUsers = [
             { id: 1, first_name: 'A', last_name: 'B', birthday: '2000-01-01' },
@@ -70,34 +70,34 @@ describe('User service routes', () => {
         ];
         User.find.mockResolvedValue(mockUsers);
 
-        const res = await request(app).get('/users/api/users');
+        const res = await request(app).get('/api/users');
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual(mockUsers);
         expect(User.find).toHaveBeenCalledTimes(1);
     });
 
-    test('GET /users/api/users when DB fails -> 500', async () => {
+    test('GET /api/users when DB fails -> 500', async () => {
         // Simulate a DB error
         User.find.mockRejectedValue(new Error('DB fail'));
 
-        const res = await request(app).get('/users/api/users');
+        const res = await request(app).get('/api/users');
         expect(res.statusCode).toBe(500);
         expect(res.body).toHaveProperty('error');
     });
 
     // ----------------
-    // POST /users/api/add
+    // POST /api/add
     // ----------------
-    test('POST /users/api/add missing fields -> 400', async () => {
+    test('POST /api/add missing fields -> 400', async () => {
         // Only id is provided -> should fail validation
-        const res = await request(app).post('/users/api/add').send({ id: 10 });
+        const res = await request(app).post('/api/add').send({ id: 10 });
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('Missing required fields');
     });
 
-    test('POST /users/api/add id not number -> 400', async () => {
+    test('POST /api/add id not number -> 400', async () => {
         // id should be numeric
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 'abc',
             first_name: 'Test',
             last_name: 'User',
@@ -107,9 +107,9 @@ describe('User service routes', () => {
         expect(res.body.error).toContain('id must be a number');
     });
 
-    test('POST /users/api/add invalid birthday -> 400', async () => {
+    test('POST /api/add invalid birthday -> 400', async () => {
         // birthday must be a valid date
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 10,
             first_name: 'Test',
             last_name: 'User',
@@ -119,11 +119,11 @@ describe('User service routes', () => {
         expect(res.body.error).toContain('birthday must be a valid date');
     });
 
-    test('POST /users/api/add user already exists -> 409', async () => {
+    test('POST /api/add user already exists -> 409', async () => {
         // User.exists() returns something -> means user already exists
         User.exists.mockResolvedValue({ _id: 'x' });
 
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 10,
             first_name: 'Test',
             last_name: 'User',
@@ -133,7 +133,7 @@ describe('User service routes', () => {
         expect(res.body.error).toContain('User already exists');
     });
 
-    test('POST /users/api/add success -> 201', async () => {
+    test('POST /api/add success -> 201', async () => {
         User.exists.mockResolvedValue(null);
 
         User.__saveMock.mockResolvedValue({
@@ -143,7 +143,7 @@ describe('User service routes', () => {
             birthday: new Date('2000-01-01')
         });
 
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 10,
             first_name: 'Test',
             last_name: 'User',
@@ -157,11 +157,11 @@ describe('User service routes', () => {
         expect(User.__saveMock).toHaveBeenCalledTimes(1);
     });
 
-    test('POST /users/api/add duplicate key error -> 409', async () => {
+    test('POST /api/add duplicate key error -> 409', async () => {
         User.exists.mockResolvedValue(null);
         User.__saveMock.mockRejectedValue({ code: 11000 });
 
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 11,
             first_name: 'Test',
             last_name: 'User',
@@ -172,11 +172,11 @@ describe('User service routes', () => {
         expect(res.body.error).toContain('already exists');
     });
 
-    test('POST /users/api/add other error -> 400', async () => {
+    test('POST /api/add other error -> 400', async () => {
         User.exists.mockResolvedValue(null);
         User.__saveMock.mockRejectedValue(new Error('some error'));
 
-        const res = await request(app).post('/users/api/add').send({
+        const res = await request(app).post('/api/add').send({
             id: 12,
             first_name: 'Test',
             last_name: 'User',
@@ -188,52 +188,52 @@ describe('User service routes', () => {
     });
 
     // ----------------
-    // GET /users/api/exists/:id
+    // GET /api/exists/:id
     // ----------------
-    test('GET /users/api/exists/:id invalid id -> 400', async () => {
+    test('GET /api/exists/:id invalid id -> 400', async () => {
         // id must be a number
-        const res = await request(app).get('/users/api/exists/abc');
+        const res = await request(app).get('/api/exists/abc');
         expect(res.statusCode).toBe(400);
         expect(res.body).toHaveProperty('error');
     });
 
-    test('GET /users/api/exists/:id exists true', async () => {
+    test('GET /api/exists/:id exists true', async () => {
         // exists() returns something -> true
         User.exists.mockResolvedValue({ _id: 'x' });
 
-        const res = await request(app).get('/users/api/exists/10');
+        const res = await request(app).get('/api/exists/10');
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({ exists: true });
     });
 
-    test('GET /users/api/exists/:id exists false', async () => {
+    test('GET /api/exists/:id exists false', async () => {
         User.exists.mockResolvedValue(null);
 
-        const res = await request(app).get('/users/api/exists/10');
+        const res = await request(app).get('/api/exists/10');
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({ exists: false });
     });
 
     // ----------------
-    // GET /users/api/:id
+    // GET /api/:id
     // ----------------
-    test('GET /users/api/:id invalid id -> 400', async () => {
-        const res = await request(app).get('/users/api/abc');
+    test('GET /api/:id invalid id -> 400', async () => {
+        const res = await request(app).get('/api/abc');
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('must be a number');
     });
 
-    test('GET /users/api/:id user not found -> 404', async () => {
+    test('GET /api/:id user not found -> 404', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue(null)
         });
 
-        const res = await request(app).get('/users/api/99');
+        const res = await request(app).get('/api/99');
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('User not found');
     });
 
-    test('GET /users/api/:id success includes total', async () => {
+    test('GET /api/:id success includes total', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue({
                 id: 10,
@@ -244,7 +244,7 @@ describe('User service routes', () => {
 
         getUserTotalCosts.mockResolvedValue(123.45);
 
-        const res = await request(app).get('/users/api/10');
+        const res = await request(app).get('/api/10');
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({
             first_name: 'Test',
@@ -255,7 +255,7 @@ describe('User service routes', () => {
         expect(getUserTotalCosts).toHaveBeenCalledWith(10);
     });
 
-    test('GET /users/api/:id cost service fails -> 500', async () => {
+    test('GET /api/:id cost service fails -> 500', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue({
                 id: 10,
@@ -266,7 +266,7 @@ describe('User service routes', () => {
 
         getUserTotalCosts.mockRejectedValue(new Error('cost down'));
 
-        const res = await request(app).get('/users/api/10');
+        const res = await request(app).get('/api/10');
         expect(res.statusCode).toBe(500);
         expect(res.body).toHaveProperty('error');
     });
