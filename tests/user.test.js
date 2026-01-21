@@ -215,25 +215,25 @@ describe('User service routes', () => {
     });
 
     // ----------------
-    // GET /api/:id
+    // GET /api/users/:id
     // ----------------
-    test('GET /api/:id invalid id -> 400', async () => {
-        const res = await request(app).get('/api/abc');
+    test('GET /api/users/:id invalid id -> 400', async () => {
+        const res = await request(app).get('/api/users/abc');
         expect(res.statusCode).toBe(400);
         expect(res.body.error).toContain('must be a number');
     });
 
-    test('GET /api/:id user not found -> 404', async () => {
+    test('GET /api/users/:id user not found -> 404', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue(null)
         });
 
-        const res = await request(app).get('/api/99');
+        const res = await request(app).get('/api/users/99');
         expect(res.statusCode).toBe(404);
         expect(res.body.error).toContain('User not found');
     });
 
-    test('GET /api/:id success includes total', async () => {
+    test('GET /api/users/:id success includes total', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue({
                 id: 10,
@@ -244,7 +244,7 @@ describe('User service routes', () => {
 
         getUserTotalCosts.mockResolvedValue(123.45);
 
-        const res = await request(app).get('/api/10');
+        const res = await request(app).get('/api/users/10');
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({
             first_name: 'Test',
@@ -255,7 +255,7 @@ describe('User service routes', () => {
         expect(getUserTotalCosts).toHaveBeenCalledWith(10);
     });
 
-    test('GET /api/:id cost service fails -> 500', async () => {
+    test('GET /api/users/:id cost service fails -> 500', async () => {
         User.findOne.mockReturnValue({
             lean: jest.fn().mockResolvedValue({
                 id: 10,
@@ -266,7 +266,7 @@ describe('User service routes', () => {
 
         getUserTotalCosts.mockRejectedValue(new Error('cost down'));
 
-        const res = await request(app).get('/api/10');
+        const res = await request(app).get('/api/users/10');
         expect(res.statusCode).toBe(500);
         expect(res.body).toHaveProperty('error');
     });

@@ -8,7 +8,7 @@ const router = express.Router();
 const { getUserTotalCosts } = require('../services/cost_service_client');
 
 
-/* GET /users/api/users
+/* GET /api/users
  * Gets list of all users from DB.
  * Input: none
  * Output: 200 + [ {id, first_name, last_name, birthday}, ... ]
@@ -32,7 +32,7 @@ router.get('/users', async (req, res) => {
     }
 });
 
-/* POST /users/api/add
+/* POST /api/add
  * Adds new user to DB.
  * Input (req.body): { id, first_name, last_name, birthday }
  * Output:
@@ -99,7 +99,7 @@ router.post('/add', async (req, res) => {
     }
 });
 
-/* GET /users/api/exists/:id
+/* GET /api/exists/:id
  * Checks if user exists in DB by id.
  * Input (req.params): id
  * Output:
@@ -132,7 +132,7 @@ router.get('/exists/:id', async (req, res) => {
     }
 });
 
-/* GET /users/api/:id
+/* GET /api/users/:id
  * Returns details for one user + total costs from Cost service.
  * Input (req.params): id
  * Output:
@@ -140,7 +140,7 @@ router.get('/exists/:id', async (req, res) => {
  *  - 400 + { error } if id not number
  *  - 404 + { error } if user not found
  *  - 500 + { error } if DB / cost-service fail */
-router.get('/:id', async (req, res) => {
+router.get('users/:id', async (req, res) => {
     try {
         const idNum = Number(req.params.id);
         if (Number.isNaN(idNum)) {
